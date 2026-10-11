@@ -1,10 +1,38 @@
 #include "get_next_line_bonus.h"
 
+char	*new_str(char *str)
+{
+	char	*ans;
+	int		i;
+	int		j;
+
+	i = 0;
+	while (str[i] && str[i] != '\n')
+		i++;
+	if (!str[i])
+	{
+		free(str);
+		return (NULL);
+	}
+	ans = ft_calloc(ft_strlen(str) - i, 1);
+	if (!ans)
+	{
+		free(str);
+		return (NULL);
+	}
+	j = 0;
+	i++;
+	while (str[i])
+		ans[j++] = str[i++];
+	free(str);
+	return (ans);
+}
+
 size_t	ft_strlen(const char *s)
 {
 	size_t	i;
 
-	if (s == 0)
+	if (!s)
 		return (0);
 	i = 0;
 	while (s[i])
@@ -12,79 +40,63 @@ size_t	ft_strlen(const char *s)
 	return (i);
 }
 
-char	*extract_line(char *str)
+char	*ft_strchr(const char *s, int c)
 {
-	char	*temp;
-	size_t	i;
-	size_t	len;
+	int	i;
 
-	if (str == 0 || str[0] == 0)
-		return (0);
-	len = 0;
-	while (str[len] && str[len] != '\n')
-		len++;
-	if (str[len] == '\n')
-		len++;
-	temp = malloc(len + 1);
-	if (temp == 0)
-		return (0);
+	if (!s)
+		return (NULL);
 	i = 0;
-	while (i < len)
+	while (s[i])
 	{
-		temp[i] = str[i];
+		if (s[i] == (char)c)
+			return ((char *)&s[i]);
 		i++;
 	}
-	temp[i] = 0;
-	return (temp);
+	if ((char)c == s[i])
+		return ((char *)&s[i]);
+	return (NULL);
 }
 
-char	*update_str(char *str)
+char	*ft_strjoin(char const *s1, char const *s2)
 {
-	char	*new;
+	char	*res;
 	size_t	i;
 	size_t	j;
 
-	if (str == 0)
-		return (0);
+	if (!s1 || !s2)
+		return (NULL);
+	res = malloc(ft_strlen(s1) + ft_strlen(s2) + 1);
+	if (!res)
+		return (NULL);
 	i = 0;
-	while (str[i] && str[i] != '\n')
+	while (s1[i])
+	{
+		res[i] = s1[i];
 		i++;
-	if (str[i] == 0)
-		return (free(str), NULL);
-	i++;
-	new = malloc(ft_strlen(str + i) + 1);
-	if (new == 0)
-		return (free(str), NULL);
+	}
 	j = 0;
-	while (str[i])
-		new[j++] = str[i++];
-	new[j] = 0;
-	free(str);
-	if (new[0] == 0)
-		return (free(new), NULL);
-	return (new);
+	while (s2[j])
+		res[i++] = s2[j++];
+	res[i] = '\0';
+	return (res);
 }
 
-void	remove_fd(t_str **file, int fd)
+void	*ft_calloc(size_t count, size_t size)
 {
-	t_str	*cur;
-	t_str	*prev;
+	void			*ptr;
+	size_t			i;
+	unsigned char	*p;
 
-	cur = *file;
-	prev = NULL;
-	while (cur)
+	ptr = malloc(count * size);
+	if (!ptr)
+		return (NULL);
+	p = (unsigned char *)ptr;
+	i = 0;
+	while (i < count * size)
 	{
-		if (cur->fd == fd)
-		{
-			if (prev)
-				prev->next = cur->next;
-			else
-				*file = cur->next;
-			free(cur->str);
-			free(cur);
-			return ;
-		}
-		prev = cur;
-		cur = cur->next;
+		p[i] = 0;
+		i++;
 	}
+	return (ptr);
 }

@@ -1,127 +1,134 @@
 #include "get_next_line_bonus.h"
 
-char	*ft_strchr(const char *s, int c)
+static t_list	*get_node(t_list **head, int fd)
 {
-	if (s == 0)
-		return (0);
-	while (*s)
-	{
-		if (*s == (char)c)
-			return ((char *)s);
-		s++;
-	}
-	if ((char)c == 0)
-		return ((char *)s);
-	return (0);
-}
+	t_list	*cur;
+	t_list	*new_node;
 
-char	*ft_strjoin(char const *s1, char const *s2)
-{
-	size_t	i;
-	size_t	j;
-	char	*str;
-
-	if (s1 == 0 || s2 == 0)
-		return (0);
-	str = malloc(ft_strlen(s1) + ft_strlen(s2) + 1);
-	if (str == 0)
-		return (0);
-	i = 0;
-	j = 0;
-	while (s1[i])
-	{
-		str[i] = s1[i];
-		i++;
-	}
-	while (s2[j])
-	{
-		str[i + j] = s2[j];
-		j++;
-	}
-	str[i + j] = 0;
-	return (str);
-}
-
-char	*read_to_str(int fd, char *str)
-{
-	char	*buffer;
-	char	*temp;
-	ssize_t	bytes;
-
-	if (str == 0)
-	{
-		str = malloc(1);
-		if (str == 0)
-			return (0);
-		str[0] = 0;
-	}
-	buffer = malloc(BUFFER_SIZE + 1);
-	if (buffer == 0)
-		return (free(str), NULL);
-	bytes = 1;
-	while (!ft_strchr(str, '\n') && bytes > 0)
-	{
-		bytes = read(fd, buffer, BUFFER_SIZE);
-		if (bytes < 0)
-			return (free(buffer), free(str), NULL);
-		buffer[bytes] = 0;
-		if (bytes > 0)
-		{
-			temp = ft_strjoin(str, buffer);
-			if (temp == 0)
-				return (free(buffer), free(str), NULL);
-			free(str);
-			str = temp;
-		}
-	}
-	free(buffer);
-	return (str);
-}
-
-t_str	*find_fd(t_str **file, int fd)
-{
-	t_str	*cur;
-
-	cur = *file;
+	cur = *head;
 	while (cur)
 	{
 		if (cur->fd == fd)
 			return (cur);
 		cur = cur->next;
 	}
-	cur = malloc(sizeof(t_str));
-	if (cur == 0)
-		return (0);
-	cur->fd = fd;
-	cur->str = NULL;
-	cur->next = *file;
-	*file = cur;
-	return (cur);
+	new_node = malloc(sizeof(t_list));
+	if (!new_node)
+		return (NULL);
+	new_node->fd = fd;
+	new_node->content = NULL;
+	new_node->next = *head;
+	*head = new_node;
+	return (new_node);
+}
+
+char	*read_file(char *str, int fd)
+{
+	char	*res;
+	int		bytes;
+	char	*tmp;
+
+	if (!str)
+		str = ft_calloc(1, 1);
+	res = ft_calloc(BUFFER_SIZE + 1, 1);
+	if (!res)
+		return (NULL);
+	bytes = 1;
+	while (bytes > 0 && !ft_strchr(str, '\n'))
+	{
+		bytes = read(fd, res, BUFFER_SIZE);
+		if (bytes < 0)
+		{
+			free(str);
+			str = NULL;
+			break ;
+		}
+		res[bytes] = '\0';
+		tmp = ft_strjoin(str, res);
+		free(str);
+		str = tmp;
+	}
+	free(res);
+	return (str);
+}
+
+char	*get_line(char *str)
+{
+	char	*line;
+	int		i;
+
+	if (!str || !str[0])
+		return (NULL);
+	i = 0;
+	while (str[i] && str[i] != '\n')
+		i++;
+	line = ft_calloc(i + 1 + (str[i] == '\n'), 1);
+	if (!line)
+		return (NULL);
+	i = 0;
+	while (str[i] && str[i] != '\n')
+	{
+		line[i] = str[i];
+		i++;
+	}
+	if (str[i] == '\n')
+		line[i] = '\n';
+	return (line);
+}
+
+static void	remove_node(t_list **head, int fd)
+{
+	t_list	*cur;
+	t_list	*prev;
+
+	cur = *head;
+	prev = NULL;
+	while (cur)
+	{
+		if (cur->fd == fd)
+		{
+			if (prev)
+				prev->next = cur->next;
+			else
+				*head = cur->next;
+			if (cur->content)
+			{
+				free(cur->content);
+				cur->content = NULL;
+			}
+			free(cur);
+			return ;
+		}
+		prev = cur;
+		cur = cur->next;
+	}
 }
 
 char	*get_next_line(int fd)
 {
-	static t_str	*file;
-	t_str	*cur;
-	char	*line;
+	static t_list	*head;
+	char			*line;
+	t_list			*cur;
 
-	if (fd < 0 || BUFFER_SIZE <= 0)
-		return (0);
-	cur = find_fd(&file, fd);
-	if (cur == 0)
-		return (0);
-	cur->str = read_to_str(fd, cur->str);
-	if (cur->str == 0)
+	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, NULL, 0) < 0)
+		return (NULL);
+	cur = get_node(&head, fd);
+	if (!cur)
+		return (NULL);
+	cur->content = read_file(cur->content, fd);
+	if (!cur->content)
 	{
-		remove_fd(&file, fd);
-		return (0);
+		remove_node(&head, fd);
+		return (NULL);
 	}
-	line = extract_line(cur->str);
-	if (line == 0)
+	line = get_line(cur->content);
+	if (!line)
 	{
-		remove_fd(&file, fd);
-		return (0);
+		remove_node(&head, fd);
+		return (NULL);
 	}
-	cur->str = update_str(cur->str);
+	cur->content = new_str(cur->content);
+	if (!cur->content)
+		remove_node(&head, fd);
 	return (line);
 }

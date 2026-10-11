@@ -1,96 +1,108 @@
 #include "get_next_line.h"
 
-char	*ft_strchr(const char *s, int c)
+char	*new_str(char *str)
 {
-	if (s == 0)
-		return (0);
-	while (*s)
+	char	*ans;
+	int		i;
+
+	i = 0;
+	while (str[i] && str[i] != '\n')
+		i++;
+	if (!str[i])
 	{
-		if (*s == (char)c)
-			return ((char *)s);
-		s++;
+		free(str);
+		return (NULL);
 	}
-	if ((char)c == 0)
-		return ((char *)s);
-	return (0);
+	ans = copy_str(str, i);
+	free(str);
+	return (ans);
 }
 
-char	*ft_strjoin(char const *s1, char const *s2)
+char	*get_line(char *str)
 {
-	size_t	i;
-	size_t	j;
-	char	*str;
+	char	*line;
+	int		i;
 
-	if (s1 == 0 || s2 == 0)
-		return (0);
-	str = malloc(ft_strlen(s1) + ft_strlen(s2) + 1);
-	if (str == 0)
-		return (0);
+	if (!str || !str[0])
+		return (NULL);
 	i = 0;
-	j = 0;
-	while (s1[i])
+	while (str[i] && str[i] != '\n')
+		i++;
+	line = ft_calloc(i + 1 + (str[i] == '\n'), 1);
+	if (!line)
+		return (NULL);
+	i = 0;
+	while (str[i] && str[i] != '\n')
 	{
-		str[i] = s1[i];
+		line[i] = str[i];
 		i++;
 	}
-	while (s2[j])
-	{
-		str[i + j] = s2[j];
-		j++;
-	}
-	str[i + j] = 0;
-	return (str);
+	if (str[i] == '\n')
+		line[i] = '\n';
+	return (line);
 }
 
-char	*read_to_str(int fd, char *str)
+static char	*read_buffer(int fd, char *str, char *res, int *bytes)
 {
-	char	*buffer;
 	char	*temp;
-	ssize_t	bytes;
 
-	if (str == 0)
+	*bytes = read(fd, res, BUFFER_SIZE);
+	if (*bytes < 0)
 	{
-		str = malloc(1);
-		if (str == 0)
-			return (0);
-		str[0] = 0;
+		free(str);
+		return (NULL);
 	}
-	buffer = malloc(BUFFER_SIZE + 1);
-	if (buffer == 0)
-		return (free(str), NULL);
+	if (*bytes == 0)
+		return (str);
+	res[*bytes] = 0;
+	temp = ft_strjoin(str, res);
+	free(str);
+	return (temp);
+}
+
+char	*read_file(char *str, int fd)
+{
+	char	*res;
+	int		bytes;
+
+	if (!str)
+		str = ft_calloc(1, 1);
+	if (!str)
+		return (NULL);
+	res = ft_calloc(BUFFER_SIZE + 1, 1);
+	if (!res)
+	{
+		free(str);
+		return (NULL);
+	}
 	bytes = 1;
-	while (!ft_strchr(str, '\n') && bytes > 0)
+	while (bytes != 0 && !ft_strchr(str, '\n'))
 	{
-		bytes = read(fd, buffer, BUFFER_SIZE);
-		if (bytes < 0)
-			return (free(buffer), free(str), NULL);
-		buffer[bytes] = 0;
-		if (bytes > 0)
-		{
-			temp = ft_strjoin(str, buffer);
-			if (temp == 0)
-				return (free(buffer), free(str), NULL);
-			free(str);
-			str = temp;
-		}
+		str = read_buffer(fd, str, res, &bytes);
+		if (!str)
+			break ;
 	}
-	free(buffer);
+	free(res);
 	return (str);
 }
 
 char	*get_next_line(int fd)
 {
 	static char	*str;
-	char	*line;
+	char		*line;
 
-	if (fd < 0 || BUFFER_SIZE <= 0)
-		return (0);
-	str = read_to_str(fd, str);
-	if (str == 0)
-		return (0);
-	line = extract_line(str);
-	if (line == 0)
-		return (free(str), str = 0, NULL);
-	str = update_str(str);
+	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, NULL, 0) < 0)
+		return (NULL);
+	str = read_file(str, fd);
+	if (!str)
+		return (NULL);
+	line = get_line(str);
+	if (!line)
+	{
+		free(str);
+		str = NULL;
+		return (NULL);
+	}
+	str = new_str(str);
 	return (line);
 }
