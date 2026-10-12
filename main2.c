@@ -47,17 +47,6 @@ int	main(void)
 		printf("fd3: %s", line);
 		free(line);
 	}
-	line = get_next_line(fd1);
-printf("fd1 EOF: %s\n", line ? line : "NULL");
-free(line);
-
-line = get_next_line(fd2);
-printf("fd2 EOF: %s\n", line ? line : "NULL");
-free(line);
-
-line = get_next_line(fd3);
-printf("fd3 EOF: %s\n", line ? line : "NULL");
-free(line);
 	close(fd1);
 	close(fd2);
 	close(fd3);

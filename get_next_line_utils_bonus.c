@@ -1,30 +1,34 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   get_next_line_utils_bonus.c                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: tahlawi3 <tahlawi3@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/10/12 15:51:41 by tahlawi3          #+#    #+#             */
+/*   Updated: 2026/10/12 16:07:36 by tahlawi3         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "get_next_line_bonus.h"
 
-char	*new_str(char *str)
+char	*copy_str(char *str, int i)
 {
 	char	*ans;
-	int		i;
 	int		j;
 
-	i = 0;
-	while (str[i] && str[i] != '\n')
-		i++;
-	if (!str[i])
-	{
-		free(str);
-		return (NULL);
-	}
-	ans = ft_calloc(ft_strlen(str) - i, 1);
+	ans = malloc(ft_strlen(str) - i);
 	if (!ans)
-	{
-		free(str);
 		return (NULL);
-	}
 	j = 0;
 	i++;
 	while (str[i])
-		ans[j++] = str[i++];
-	free(str);
+	{
+		ans[j] = str[i];
+		j++;
+		i++;
+	}
+	ans[j] = 0;
 	return (ans);
 }
 
@@ -82,21 +86,12 @@ char	*ft_strjoin(char const *s1, char const *s2)
 	return (res);
 }
 
-void	*ft_calloc(size_t count, size_t size)
+char	*check_str(char *str)
 {
-	void			*ptr;
-	size_t			i;
-	unsigned char	*p;
-
-	ptr = malloc(count * size);
-	if (!ptr)
-		return (NULL);
-	p = (unsigned char *)ptr;
-	i = 0;
-	while (i < count * size)
-	{
-		p[i] = 0;
-		i++;
-	}
-	return (ptr);
+	if (str)
+		return (str);
+	str = malloc(1);
+	if (str)
+		str[0] = '\0';
+	return (str);
 }

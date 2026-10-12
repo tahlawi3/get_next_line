@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: tahlawi3 <tahlawi3@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/10/12 15:51:38 by tahlawi3          #+#    #+#             */
+/*   Updated: 2026/10/12 15:51:39 by tahlawi3         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "get_next_line.h"
 
 char	*new_str(char *str)
@@ -28,7 +40,7 @@ char	*get_line(char *str)
 	i = 0;
 	while (str[i] && str[i] != '\n')
 		i++;
-	line = ft_calloc(i + 1 + (str[i] == '\n'), 1);
+	line = malloc(i + 1 + (str[i] == '\n'));
 	if (!line)
 		return (NULL);
 	i = 0;
@@ -38,7 +50,8 @@ char	*get_line(char *str)
 		i++;
 	}
 	if (str[i] == '\n')
-		line[i] = '\n';
+		line[i++] = '\n';
+	line[i] = 0;
 	return (line);
 }
 
@@ -65,11 +78,10 @@ char	*read_file(char *str, int fd)
 	char	*res;
 	int		bytes;
 
-	if (!str)
-		str = ft_calloc(1, 1);
+	str = check_str(str);
 	if (!str)
 		return (NULL);
-	res = ft_calloc(BUFFER_SIZE + 1, 1);
+	res = malloc(BUFFER_SIZE + 1);
 	if (!res)
 	{
 		free(str);
